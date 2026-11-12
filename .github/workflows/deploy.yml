@@ -1,0 +1,39 @@
+
+name: deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag to deploy (e.g. 1.0.1 or 1.0.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    environment: production
+
+    steps:
+      - name: Deploy Docker image
+        shell: pwsh
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          $Image = "ghcr.io/$env:GITHUB_REPOSITORY".ToLower()
+
+          docker rm -f lab11-prod 2>$null
+
+          docker run -d `
+            --name lab11-prod `
+            -p 8012:8000 `
+            "${Image}:$env:TAG"
+
+          docker ps
