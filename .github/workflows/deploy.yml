@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Image tag to deploy (e.g. 1.0.1 or 1.0.0)"
+        description: "Image tag to deploy"
         required: true
         type: string
 
@@ -23,17 +23,17 @@ jobs:
 
     steps:
       - name: Deploy Docker image
-        shell: pwsh
+        shell: bash
         env:
           TAG: ${{ inputs.tag }}
         run: |
-          $Image = "ghcr.io/$env:GITHUB_REPOSITORY".ToLower()
+          IMAGE="ghcr.io/$(echo "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
 
-          docker rm -f lab11-prod 2>$null
+          docker rm -f lab11-prod 2>/dev/null || true
 
-          docker run -d `
-            --name lab11-prod `
-            -p 8012:8000 `
-            "${Image}:$env:TAG"
+          docker run -d \
+            --name lab11-prod \
+            -p 8012:8000 \
+            "$IMAGE:$TAG"
 
           docker ps
